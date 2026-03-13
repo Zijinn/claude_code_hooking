@@ -1,0 +1,2 @@
+# claude_code_hooking
+用于Windows下的claude code运行监控与提示
