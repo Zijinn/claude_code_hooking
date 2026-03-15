@@ -1,0 +1,91 @@
+name: 构建桌面应用 / Build Desktop Apps
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: 编译 ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows (x64)
+            script: build:win
+            artifact: claude-monitor-win.exe
+          - os: macos-latest
+            name: macOS (x64)
+            script: build:mac
+            artifact: claude-monitor-mac
+          - os: macos-latest
+            name: macOS (ARM64)
+            script: build:mac-arm
+            artifact: claude-monitor-mac-arm64
+
+    steps:
+      - name: 检出代码 / Checkout
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js / Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖 / Install dependencies
+        run: npm ci
+
+      - name: 编译可执行文件 / Build executable
+        run: npm run ${{ matrix.script }}
+
+      - name: 上传构建产物 / Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}
+          if-no-files-found: error
+
+  release:
+    name: 发布 Release / Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: 检出代码 / Checkout
+        uses: actions/checkout@v4
+
+      - name: 下载所有构建产物 / Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      - name: 整理产物路径 / Flatten artifact paths
+        run: |
+          mkdir -p release
+          find dist/ -type f | while read f; do
+            cp "$f" release/
+          done
+
+      - name: 创建 Release / Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true
+          body: |
+            ## 下载说明 / Download Instructions
+
+            | 平台 | 文件 | 说明 |
+            |------|------|------|
+            | Windows 64位 | `claude-monitor-win.exe` | 双击直接运行，无需安装 Node.js |
+            | macOS Intel | `claude-monitor-mac` | `chmod +x claude-monitor-mac && ./claude-monitor-mac` |
+            | macOS Apple Silicon | `claude-monitor-mac-arm64` | `chmod +x claude-monitor-mac-arm64 && ./claude-monitor-mac-arm64` |
+
+            启动后监控台将自动在默认浏览器中打开。

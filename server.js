@@ -221,8 +221,8 @@ server.listen(PORT, HOST, () => {
   console.log('  将 hooks 配置添加到 ~/.claude/settings.json 即可连接 Claude Code 实例');
   console.log('  （在仪表盘中点击齿轮按钮查看配置）\n');
 
-  // Optional: open browser
-  if (process.argv.includes('--open')) {
+  // Auto-open browser when packaged as a desktop executable (pkg) or when --open flag is passed
+  if (process.pkg || process.argv.includes('--open')) {
     import('open').then(m => m.default(`http://localhost:${PORT}`)).catch(() => {});
   }
 });
