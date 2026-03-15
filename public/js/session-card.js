@@ -1,14 +1,24 @@
 // Session card component
 const SessionCard = {
-  render(session, vscodeWindow) {
+  // IDE badge labels and color class names
+  IDE_LABELS: {
+    vscode:      'VSCode',
+    cursor:      'Cursor',
+    windsurf:    'Windsurf',
+    antigravity: 'Antigravity',
+    qcode:       'QCode',
+    lingma:      'Lingma',
+  },
+
+  render(session, ideInfo) {
     const el = document.createElement('div');
     el.className = 'session-card status-' + session.status;
     el.dataset.sessionId = session.id;
-    this.update(el, session, vscodeWindow);
+    this.update(el, session, ideInfo);
     return el;
   },
 
-  update(el, session, vscodeWindow) {
+  update(el, session, ideInfo) {
     // Sync status class while preserving 'selected'
     const isSelected = el.classList.contains('selected');
     el.className = 'session-card status-' + session.status;
@@ -28,9 +38,18 @@ const SessionCard = {
       ? `<div class="card-reminder ${session.status}"><span class="reminder-icon">${session.status === 'waiting_for_input' ? '\u23F0\uFE0E' : '\u26A0\uFE0E'}</span><span class="reminder-text">${reminderText}</span></div>`
       : '';
 
-    const vscodeBadgeHtml = vscodeWindow
-      ? `<span class="vscode-badge" title="${this._escapeAttr(vscodeWindow)}">&#10092;/&#10093; VSCode</span>`
+    // Manual close reminder when session has ended
+    const closeReminderHtml = session.status === 'ended'
+      ? `<div class="card-reminder card-close-reminder" role="note" aria-label="请手动关闭对应的终端窗口"><span class="reminder-icon" aria-hidden="true">🖥\uFE0E</span><span class="reminder-text">请手动关闭对应的终端窗口</span></div>`
       : '';
+
+    // IDE badge with per-IDE color
+    const ideBadgeHtml = ideInfo
+      ? `<span class="ide-badge ide-badge-${ideInfo.ide}" title="${this._escapeAttr(ideInfo.window)}">${this.IDE_LABELS[ideInfo.ide] || ideInfo.ide}</span>`
+      : '';
+
+    // Subagent team section
+    const teamHtml = this._renderTeam(session);
 
     el.innerHTML = `
       <div class="card-header">
@@ -41,6 +60,7 @@ const SessionCard = {
         <span class="card-status-label ${session.status}">${this._statusIcon(session.status)}${this._statusLabel(session.status)}</span>
       </div>
       ${reminderHtml}
+      ${closeReminderHtml}
       <div class="card-body">
         <div class="card-row"><span class="label">目录</span><span class="value" title="${session.cwd || ''}">${cwd}</span></div>
         ${session.model ? `<div class="card-row"><span class="label">模型</span><span class="value">${session.model}${session.agentType ? ` (${session.agentType})` : ''}</span></div>` : ''}
@@ -50,15 +70,52 @@ const SessionCard = {
         <div class="card-row"><span class="label">耗时</span><span class="value">${session.stats.toolCalls && session.stats.totalToolTime ? this._formatMs(Math.round(session.stats.totalToolTime / session.stats.toolCalls)) + '/次' : '—'}</span></div>
         <div class="card-row"><span class="label">token</span><span class="value token-value">${this._formatTokens(session.stats)}</span></div>
       </div>
+      ${teamHtml}
       ${session.status === 'active' ? '<div class="claude-runner-wrap"><div class="claude-runner"></div></div>' : ''}
       <div class="card-footer">
-        <div class="subagent-badges">${session.subagents.map((a, i) => `<span class="subagent-badge">&#9670; 子代理 #${i + 1}</span>`).join('')}${vscodeBadgeHtml}</div>
+        <div class="subagent-badges">${session.subagents.map((a, i) => `<span class="subagent-badge">&#9670; 子代理 #${i + 1}</span>`).join('')}${ideBadgeHtml}</div>
         <span>${session.stats.toolCalls} 次工具 &middot; ${session.stats.permissions} 次授权${session.stats.errors ? ` &middot; <span style="color:#FF3B30">${session.stats.errors} 错误</span>` : ''}${session.stats.compactions ? ` &middot; <span style="color:#AF52DE">${session.stats.compactions} 压缩</span>` : ''}${session.stats.tasksCompleted ? ` &middot; <span style="color:#34C759">${session.stats.tasksCompleted} 任务</span>` : ''}${session.stats.worktrees ? ` &middot; <span style="color:#5AC8FA">${session.stats.worktrees} 工作区</span>` : ''}${session.stats.instructionsLoaded ? ` &middot; ${session.stats.instructionsLoaded} 指令` : ''}${((session.stats.inputTokens || 0) + (session.stats.outputTokens || 0) + (session.stats.cacheReadTokens || 0) + (session.stats.cacheCreateTokens || 0)) > 0 ? ` &middot; <span class="token-value">${this._formatTokenCount((session.stats.inputTokens || 0) + (session.stats.outputTokens || 0) + (session.stats.cacheReadTokens || 0) + (session.stats.cacheCreateTokens || 0))}</span> token` : ''}${session.endReason ? ` &middot; <span style="color:var(--text-tertiary)">结束: ${session.endReason}</span>` : ''}</span>
         <div class="card-actions">
           <button class="card-delete" title="移除会话" data-delete="${session.id}">&times;</button>
         </div>
       </div>
     `;
+  },
+
+  /**
+   * Render the agent team tree for sessions with subagents.
+   * Shows active and completed subagents with type and duration.
+   */
+  _renderTeam(session) {
+    const details = session.subagentDetails || {};
+    const allIds = Object.keys(details);
+    if (allIds.length === 0) return '';
+
+    const activeIds = session.subagents || [];
+    const rows = allIds.map((agentId, i) => {
+      const d = details[agentId];
+      const isActive = activeIds.includes(agentId);
+      const typeLabel = d.type ? `<span class="agent-team-type">${d.type}</span>` : '';
+      const duration = this._subagentDuration(d);
+      const statusClass = isActive ? 'agent-team-active' : 'agent-team-done';
+      const icon = isActive ? '<span class="agent-team-icon icon-spin">⚙\uFE0E</span>' : '<span class="agent-team-icon">✓</span>';
+      return `<div class="agent-team-row ${statusClass}">${icon}<span class="agent-team-label">子代理 #${i + 1}</span>${typeLabel}<span class="agent-team-duration">${duration}</span></div>`;
+    });
+
+    return `<div class="agent-team-section">
+      <div class="agent-team-header">🤖 代理团队</div>
+      <div class="agent-team-main"><span class="agent-team-icon">◉</span><span class="agent-team-label">主代理</span>${session.status === 'active' ? '<span class="agent-team-type">运行中</span>' : ''}</div>
+      <div class="agent-team-children">${rows.join('')}</div>
+    </div>`;
+  },
+
+  /**
+   * Format a subagent's elapsed or total duration from its detail record.
+   */
+  _subagentDuration(detail) {
+    if (!detail || !detail.startedAt) return '';
+    const end = detail.endedAt || Date.now();
+    return this._formatDuration(end - detail.startedAt);
   },
 
   _statusLabel(status) {
