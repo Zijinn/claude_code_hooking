@@ -7,6 +7,8 @@ const Dashboard = {
   durationInterval: null,
   // Track cumulative token high-water marks since browser window opened
   cumulativeTokens: { input: 0, output: 0, cacheRead: 0, cacheCreate: 0 },
+  // Track which sessions are driven by a VSCode window (sessionId → window title)
+  vscodeStatus: {},
 
   init() {
     this.grid = document.getElementById('session-grid');
@@ -18,13 +20,6 @@ const Dashboard = {
       if (deleteBtn) {
         e.stopPropagation();
         this._deleteSession(deleteBtn.dataset.delete);
-        return;
-      }
-      // Focus terminal button
-      const focusBtn = e.target.closest('[data-focus-terminal]');
-      if (focusBtn) {
-        e.stopPropagation();
-        this._focusTerminal(focusBtn.dataset.focusTerminal);
         return;
       }
       // Card selection
@@ -74,9 +69,9 @@ const Dashboard = {
     this.sessions.set(session.id, session);
     let card = this.grid.querySelector(`[data-session-id="${session.id}"]`);
     if (card) {
-      SessionCard.update(card, session);
+      SessionCard.update(card, session, this.vscodeStatus[session.id]);
     } else {
-      card = SessionCard.render(session);
+      card = SessionCard.render(session, this.vscodeStatus[session.id]);
       // Insert before empty state
       if (this.emptyState && this.emptyState.parentNode === this.grid) {
         this.grid.insertBefore(card, this.emptyState);
@@ -94,17 +89,13 @@ const Dashboard = {
     this.removeSession(id);
   },
 
-  _focusTerminal(id) {
-    fetch(`/api/sessions/${id}/focus-terminal`, { method: 'POST' })
-      .then(r => r.json())
-      .then(data => {
-        if (!data.ok) {
-          console.warn('无法聚焦终端:', data.error || '未知错误');
-        }
-      })
-      .catch(() => {
-        console.warn('聚焦终端请求失败');
-      });
+  updateVSCodeStatus(sessions) {
+    this.vscodeStatus = sessions || {};
+    // Re-render all cards to reflect updated VSCode badge
+    for (const [id, session] of this.sessions) {
+      const card = this.grid.querySelector(`[data-session-id="${id}"]`);
+      if (card) SessionCard.update(card, session, this.vscodeStatus[id]);
+    }
   },
 
   _updateEmptyState() {
@@ -118,7 +109,7 @@ const Dashboard = {
     for (const [id, session] of this.sessions) {
       if (session.status === 'ended') continue;
       const card = this.grid.querySelector(`[data-session-id="${id}"]`);
-      if (card) SessionCard.update(card, session);
+      if (card) SessionCard.update(card, session, this.vscodeStatus[id]);
     }
   },
 
