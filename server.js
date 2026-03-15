@@ -8,6 +8,10 @@ const { generateFullSettings } = require('./lib/config-generator');
 const terminalChecker = require('./lib/terminal-checker');
 
 const PORT = process.env.PORT || 3456;
+// Bind to localhost only by default so the dashboard is not accessible from
+// other machines on the network.  Set HOST=0.0.0.0 (or pass --host) only
+// when you explicitly need remote access.
+const HOST = process.env.HOST || (process.argv.includes('--host') ? '0.0.0.0' : '127.0.0.1');
 const app = express();
 const server = http.createServer(app);
 const store = new SessionStore();
@@ -18,12 +22,13 @@ const clients = new Set();
 
 wss.on('connection', (ws) => {
   clients.add(ws);
-  // Send current state on connect
+  // Send current state on connect — strip raw payload from events so that
+  // full hook bodies are not exposed to browser clients over WebSocket.
   ws.send(JSON.stringify({
     type: 'init',
     sessions: store.getAll(),
     stats: store.getStats(),
-    events: store.getGlobalEvents().slice(-50),
+    events: store.getGlobalEvents().slice(-50).map(({ raw: _raw, ...e }) => e),
   }));
   ws.on('close', () => clients.delete(ws));
   ws.on('error', () => clients.delete(ws));
@@ -87,7 +92,7 @@ app.get('/api/sessions/:id', (req, res) => {
 });
 
 app.get('/api/sessions/:id/events', (req, res) => {
-  res.json(store.getEvents(req.params.id));
+  res.json(store.getEvents(req.params.id).map(({ raw: _raw, ...e }) => e));
 });
 
 app.delete('/api/sessions/:id', (req, res) => {
@@ -109,7 +114,7 @@ app.get('/api/stats', (req, res) => {
 });
 
 app.get('/api/events', (req, res) => {
-  res.json(store.getGlobalEvents());
+  res.json(store.getGlobalEvents().map(({ raw: _raw, ...e }) => e));
 });
 
 app.post('/api/sessions/:id/focus-terminal', (req, res) => {
@@ -225,8 +230,13 @@ setInterval(async () => {
   }
 }, 15 * 1000);
 
-server.listen(PORT, () => {
-  console.log(`\n  Claude Code 监控台已启动: http://localhost:${PORT}\n`);
+server.listen(PORT, HOST, () => {
+  const displayHost = HOST === '127.0.0.1' ? 'localhost' : HOST;
+  if (HOST !== '127.0.0.1') {
+    console.warn(`\n  ⚠️ 警告: 服务绑定到 ${HOST}，可能被局域网内其他设备访问。`);
+    console.warn('  如需仅本机访问，请移除 HOST 环境变量或 --host 参数。\n');
+  }
+  console.log(`\n  Claude Code 监控台已启动: http://${displayHost}:${PORT}\n`);
   console.log('  将 hooks 配置添加到 ~/.claude/settings.json 即可连接 Claude Code 实例');
   console.log('  （在仪表盘中点击齿轮按钮查看配置）\n');
 
