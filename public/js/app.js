@@ -29,6 +29,10 @@
     if (data.stats) Dashboard.updateStats(data.stats);
   });
 
+  ws.on('vscode_status', (data) => {
+    Dashboard.updateVSCodeStatus(data.sessions);
+  });
+
   ws.connect();
 
   // Version tag

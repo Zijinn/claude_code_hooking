@@ -43,30 +43,6 @@ function broadcast(data) {
   }
 }
 
-// --- Auto-cleanup: remove sessions 30s after terminal window closes ---
-const pendingRemovals = new Map(); // sessionId → setTimeout handle
-
-function scheduleRemoval(sessionId) {
-  if (pendingRemovals.has(sessionId)) return;
-  console.log(`[auto-cleanup] 终端窗口已关闭，${sessionId} 将在30秒后清除`);
-  const timer = setTimeout(() => {
-    pendingRemovals.delete(sessionId);
-    store.remove(sessionId);
-    broadcast({ type: 'session_removed', sessionId, stats: store.getStats() });
-    console.log(`[auto-cleanup] 已清除会话 ${sessionId}`);
-  }, 30 * 1000);
-  pendingRemovals.set(sessionId, timer);
-}
-
-function cancelRemoval(sessionId) {
-  const timer = pendingRemovals.get(sessionId);
-  if (timer) {
-    clearTimeout(timer);
-    pendingRemovals.delete(sessionId);
-    console.log(`[auto-cleanup] 取消清除 ${sessionId}（收到新事件）`);
-  }
-}
-
 // Middleware
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -78,7 +54,7 @@ app.post('/hooks/event', (req, res, next) => {
     console.log('[DEBUG] UserPromptSubmit received:', JSON.stringify(req.body, null, 2));
   }
   next();
-}, createHookRouter(store, broadcast, cancelRemoval));
+}, createHookRouter(store, broadcast));
 
 // REST API
 app.get('/api/sessions', (req, res) => {
@@ -208,25 +184,30 @@ setInterval(() => {
 // Prune ended sessions older than 1 minute every 30s
 setInterval(() => store.prune(60 * 1000), 30 * 1000);
 
-// Poll terminal windows every 15s — schedule removal for orphaned sessions
+// Poll VSCode windows every 15s — broadcast which sessions are VSCode-driven
 setInterval(async () => {
   const sessions = store.getAll();
   if (sessions.length === 0) return;
 
   try {
-    const orphanIds = await terminalChecker.findOrphanSessions(sessions);
-    if (orphanIds.length > 0) console.log(`[auto-cleanup] 发现${orphanIds.length}个孤儿会话:`, orphanIds);
-    for (const id of orphanIds) {
-      scheduleRemoval(id);
-    }
-    // If terminal reappears, cancel pending removal
+    const vscodeWindows = await terminalChecker.getVSCodeWindows();
+    const sessionVSCodeMap = {};
     for (const session of sessions) {
-      if (!orphanIds.includes(session.id) && pendingRemovals.has(session.id)) {
-        cancelRemoval(session.id);
+      const cwd = session.cwd || '';
+      const folderName = cwd.replace(/\\/g, '/').replace(/\/+$/, '').split('/').pop() || '';
+      if (folderName && vscodeWindows.length > 0) {
+        // Match folder name as a word/path segment in the window title (avoids false positives).
+        // VSCode titles typically follow: "filename — folderName" or "folderName — Visual Studio Code"
+        const re = new RegExp(`(^|[\\s\\-\u2014/\\\\])${folderName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([\\s\\-\u2014/\\\\]|$)`, 'i');
+        const matchingWindow = vscodeWindows.find(title => re.test(title));
+        if (matchingWindow) {
+          sessionVSCodeMap[session.id] = matchingWindow;
+        }
       }
     }
+    broadcast({ type: 'vscode_status', sessions: sessionVSCodeMap });
   } catch (err) {
-    console.error('[auto-cleanup] 检测终端窗口失败:', err.message);
+    console.error('[vscode-check] 检测VSCode窗口失败:', err.message);
   }
 }, 15 * 1000);
 

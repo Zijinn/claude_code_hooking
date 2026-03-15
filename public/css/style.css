@@ -389,6 +389,8 @@ body {
 .subagent-badges {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .subagent-badge {
@@ -401,6 +403,73 @@ body {
   color: var(--color-accent);
   font-size: 10px;
   font-weight: 500;
+}
+
+.vscode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 100px;
+  background: rgba(0,120,215,0.12);
+  color: #0078D7;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .vscode-badge {
+  background: rgba(0,120,215,0.2);
+  color: #4FC3F7;
+}
+
+/* ── Card Reminder ── */
+.card-reminder {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  animation: reminderPulse 1.5s ease-in-out infinite;
+}
+
+.card-reminder.waiting_for_input {
+  background: rgba(255,159,10,0.15);
+  color: #CC7F08;
+  border: 1px solid rgba(255,159,10,0.35);
+}
+
+.card-reminder.needs_attention {
+  background: rgba(255,59,48,0.12);
+  color: #CC2F26;
+  border: 1px solid rgba(255,59,48,0.3);
+}
+
+[data-theme="dark"] .card-reminder.waiting_for_input {
+  background: rgba(255,159,10,0.18);
+  color: #FFB340;
+  border-color: rgba(255,159,10,0.4);
+}
+
+[data-theme="dark"] .card-reminder.needs_attention {
+  background: rgba(255,59,48,0.18);
+  color: #FF6961;
+  border-color: rgba(255,59,48,0.4);
+}
+
+.reminder-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+@keyframes reminderPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-reminder { animation: none; }
 }
 
 .card-actions {

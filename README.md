@@ -22,6 +22,8 @@ A real-time multi-terminal Claude Code monitoring dashboard. Receives events via
 - **Real-time Event Stream** — WebSocket push with < 100ms latency
 - **Session Management** — Auto-track session lifecycle (Start → Tool Use → End)
 - **Permission Alerts** — Alert banners + browser notifications for permission requests / prolonged idle
+- **Card Reminders** — Inline pulsing reminder banner on session cards when waiting for input or needing attention
+- **VSCode Integration** — Detects active VSCode windows and shows which session each is driving
 - **Subagent Tracking** — Display subagent start and stop events
 - **Event Filtering** — Click a session card to filter events for that session
 - **Light / Dark Theme** — Follow system preference or toggle manually, auto-saved
@@ -130,6 +132,8 @@ Each Claude Code instance is shown as a card with:
 
 - **Status** — Green dot = running, Yellow blink = waiting for input, Red blink = needs attention, Gray = ended
 - **Working Directory** — Current Claude Code working path
+- **Card Reminder** — Pulsing inline banner when the session needs input or attention
+- **VSCode Badge** — Shows "VSCode" in the footer if a matching VSCode window is detected
 - **Current Tool** — Tool currently being executed
 - **Uptime** — Time since session started
 - **Subagents** — Active subagent tags
@@ -212,7 +216,7 @@ This tool is a **local-only** monitoring dashboard. Here is a summary of all dat
 
 - **No Database** — All data is stored in memory, cleared on server restart
 - **Ring Buffer** — Global: last 1000 events; per-session: last 200 events
-- **Auto Cleanup** — Ended sessions pruned after 1 hour; orphan sessions (closed terminal) removed after 30 seconds
+- **Auto Cleanup** — Ended sessions pruned after 1 hour; idle sessions pruned after 2 hours
 - **Non-blocking** — Hook endpoint always returns success, never blocks Claude Code
 - **Reconnect** — WebSocket exponential backoff reconnect (1s → 30s)
 
@@ -234,6 +238,8 @@ This tool is a **local-only** monitoring dashboard. Here is a summary of all dat
 - **实时事件流** — WebSocket 推送，延迟 < 100ms
 - **会话管理** — 自动跟踪会话生命周期（启动 → 工具调用 → 结束）
 - **权限提醒** — 权限请求 / 长时间闲置自动弹出告警横幅 + 浏览器通知
+- **卡片提醒** — 等待输入或需要关注时，在会话卡片上显示脉冲提醒横幅
+- **VSCode 集成** — 检测活跃的 VSCode 窗口，并在对应卡片上显示"VSCode"标记
 - **子代理追踪** — 显示子代理的启动与停止
 - **事件筛选** — 点击会话卡片过滤该会话的事件日志
 - **亮色 / 暗色主题** — 跟随系统或手动切换，偏好自动保存
@@ -342,6 +348,8 @@ PORT=8080 npm start
 
 - **状态指示** — 绿色圆点 = 运行中，黄色闪烁 = 等待输入，红色闪烁 = 需关注，灰色 = 已结束
 - **工作目录** — 当前 Claude Code 的工作路径
+- **卡片提醒** — 等待输入或需要关注时，卡片内显示脉冲动效提醒横幅
+- **VSCode 标记** — 若检测到匹配的 VSCode 窗口，卡片底部显示"VSCode"标记
 - **当前工具** — 正在执行的工具名称
 - **运行时长** — 自会话启动以来的时间
 - **子代理** — 活跃的子代理标签
@@ -437,7 +445,7 @@ claude-hook-monitor/
 
 - **无数据库** — 所有数据保存在内存中，服务重启后清空
 - **环形缓冲区** — 全局保留最近 1000 条事件，每会话保留 200 条
-- **自动清理** — 已结束会话超过 1 小时清理；孤儿会话（终端窗口关闭）30 秒后清除
+- **自动清理** — 已结束会话超过 1 小时清理；空闲会话超过 2 小时清理
 - **非阻塞** — Hook 端点始终返回成功，不会阻塞 Claude Code 执行
 - **断线重连** — WebSocket 断开后指数退避重连（1s → 30s）
 
