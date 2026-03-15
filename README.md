@@ -194,7 +194,21 @@ claude-hook-monitor/
     └── assets/favicon.svg
 ```
 
-### Technical Details
+### Security & Privacy
+
+This tool is a **local-only** monitoring dashboard. Here is a summary of all data flows so you can verify no personal data leaves your machine:
+
+| Traffic direction | What is sent | Where it goes |
+|-------------------|--------------|---------------|
+| Claude Code → this server | Hook events (session ID, tool name/args, user prompts, token counts) | `localhost` only |
+| This server → your browser | Processed event summaries (raw hook bodies are **stripped** before broadcast) | `localhost` only |
+| This server → internet | **Nothing.** No outbound requests are ever made. | — |
+
+**API keys are never present in hook payloads.** Claude Code only sends operational events (tool calls, session start/end, permission requests, etc.).
+
+> **Note on network binding**: By default the server binds to `127.0.0.1` (localhost only), so it cannot be reached from other devices on your network.  If you intentionally need remote access, set the `HOST` environment variable (e.g. `HOST=0.0.0.0 npm start`) — the server will print a warning when it starts with a non-localhost binding.
+
+
 
 - **No Database** — All data is stored in memory, cleared on server restart
 - **Ring Buffer** — Global: last 1000 events; per-session: last 200 events
@@ -404,6 +418,20 @@ claude-hook-monitor/
     │   └── theme.js          # 主题切换
     └── assets/favicon.svg
 ```
+
+### 安全与隐私
+
+本工具是**纯本地**监控仪表盘。以下是完整的数据流说明，供你自行验证没有任何个人数据离开你的设备：
+
+| 流量方向 | 发送内容 | 目标 |
+|---------|---------|------|
+| Claude Code → 本服务 | Hook 事件（会话 ID、工具名/参数、用户提示词、Token 统计） | 仅 `localhost` |
+| 本服务 → 浏览器 | 处理后的事件摘要（原始 Hook 载荷在广播前已**剥离**） | 仅 `localhost` |
+| 本服务 → 互联网 | **无。** 服务不发起任何出站请求。 | — |
+
+**API 密钥不会出现在 Hook 载荷中。** Claude Code 仅发送操作事件（工具调用、会话启动/结束、权限请求等）。
+
+> **关于网络绑定**：服务默认绑定到 `127.0.0.1`（仅本机），局域网内其他设备无法访问。如需远程访问，可设置环境变量 `HOST=0.0.0.0 npm start`，启动时会打印警告提示。
 
 ### 技术细节
 
