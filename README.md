@@ -2,6 +2,8 @@
 
 **[中文](#中文) | [English](#english)**
 
+> 💡 **无需安装 Node.js** — 直接从 [Releases](../../releases) 页面下载 Windows / macOS 桌面可执行文件，双击即可运行。
+
 > **Demo Video / 演示视频**: [Bilibili](https://www.bilibili.com/video/BV1JcwJz3Exy/)
 
 ---
@@ -32,13 +34,27 @@ A real-time multi-terminal Claude Code monitoring dashboard. Receives events via
 
 ### Quick Start
 
-#### 1. Install Dependencies
+#### Option A — Desktop Executable (no Node.js required)
+
+Download the prebuilt binary from [Releases](../../releases):
+
+| Platform | File | How to run |
+|----------|------|------------|
+| Windows 64-bit | `claude-monitor-win.exe` | Double-click to launch |
+| macOS Intel | `claude-monitor-mac` | `chmod +x claude-monitor-mac && ./claude-monitor-mac` |
+| macOS Apple Silicon | `claude-monitor-mac-arm64` | `chmod +x claude-monitor-mac-arm64 && ./claude-monitor-mac-arm64` |
+
+The dashboard opens automatically in your default browser after launch.
+
+#### Option B — Run from Source
+
+##### 1. Install Dependencies
 
 ```bash
 npm install
 ```
 
-#### 2. Start the Server
+##### 2. Start the Server
 
 ```bash
 npm start
@@ -46,19 +62,13 @@ npm start
 
 The server runs at `http://localhost:3456` by default.
 
-Auto-open browser:
-
-```bash
-node server.js --open
-```
-
 Custom port:
 
 ```bash
 PORT=8080 npm start
 ```
 
-#### 3. Configure Claude Code
+##### 3. Configure Claude Code
 
 Add the following to `~/.claude/settings.json` (or click the ⚙ button in the dashboard to copy):
 
@@ -248,13 +258,27 @@ This tool is a **local-only** monitoring dashboard. Here is a summary of all dat
 
 ### 快速开始
 
-#### 1. 安装依赖
+#### 方式一：直接使用桌面可执行文件（推荐，无需 Node.js）
+
+从 [Releases](../../releases) 页面下载预编译的可执行文件：
+
+| 平台 | 文件名 | 运行方式 |
+|------|--------|----------|
+| Windows 64位 | `claude-monitor-win.exe` | 双击运行即可 |
+| macOS Intel | `claude-monitor-mac` | `chmod +x claude-monitor-mac && ./claude-monitor-mac` |
+| macOS Apple Silicon (M 系列) | `claude-monitor-mac-arm64` | `chmod +x claude-monitor-mac-arm64 && ./claude-monitor-mac-arm64` |
+
+> 启动后监控台会**自动在默认浏览器中打开**，无需手动输入地址。
+
+#### 方式二：从源码运行
+
+##### 1. 安装依赖
 
 ```bash
 npm install
 ```
 
-#### 2. 启动服务
+##### 2. 启动服务
 
 ```bash
 npm start
@@ -262,19 +286,13 @@ npm start
 
 服务默认运行在 `http://localhost:3456`。
 
-自动打开浏览器：
-
-```bash
-node server.js --open
-```
-
 自定义端口：
 
 ```bash
 PORT=8080 npm start
 ```
 
-#### 3. 配置 Claude Code
+#### 3. 配置 IDE / 编辑器
 
 将以下内容添加到 `~/.claude/settings.json`（也可在仪表盘中点击 ⚙ 按钮一键复制）：
 
@@ -329,7 +347,80 @@ PORT=8080 npm start
 
 #### 4. 开始使用
 
-配置完成后，在任意终端启动 Claude Code，监控台会自动捕获事件并实时显示。
+配置完成后，在任意终端 / IDE 中启动 Claude Code，监控台会自动捕获事件并实时显示。
+
+---
+
+### 各 IDE / 编辑器配置指南
+
+Claude Code 可以在多种 IDE 中运行，以下是各工具的 hooks 配置说明。**所有 IDE 都使用同一份配置文件 `~/.claude/settings.json`**，配置内容完全相同。
+
+#### Claude Code（命令行 / 终端）
+
+编辑 `~/.claude/settings.json`，添加上方的 hooks 配置。也可在仪表盘中点击 ⚙ 按钮直接复制。
+
+#### VS Code
+
+在 VS Code 的终端中运行 `claude`，Claude Code 会自动读取 `~/.claude/settings.json`，配置方式与命令行相同。
+
+若使用 **Claude Code 官方 VS Code 扩展**，同样读取 `~/.claude/settings.json`，无需额外操作。
+
+#### Cursor
+
+Cursor 的终端集成支持完整的 Claude Code CLI 体验。在 Cursor 的终端面板（`Ctrl+`` ` 或 `⌃`` `）中运行 `claude`，与在系统终端中使用方式相同。`~/.claude/settings.json` 中的 hooks 配置对 Cursor 终端同样生效。
+
+#### Windsurf
+
+Windsurf 内置终端同样可以运行 Claude Code CLI。打开 Windsurf 的终端面板运行 `claude`，hooks 配置从 `~/.claude/settings.json` 自动加载，无需额外配置。
+
+#### 通义灵码（Lingma / Tongyi Lingma）
+
+通义灵码作为 VS Code / JetBrains 插件运行，Claude Code 在其宿主 IDE 的终端中以独立进程运行。配置 `~/.claude/settings.json` 后，在通义灵码所在 IDE 的集成终端中启动 `claude` 即可，hooks 配置自动生效。
+
+#### Qoder
+
+Qoder 终端内启动 `claude` 时，同样读取 `~/.claude/settings.json` 中的 hooks 配置，配置方式与其他终端环境完全一致。
+
+#### Antigravity
+
+Antigravity 作为 AI 编程助手工具，Claude Code 在其终端会话中运行。只需确保 `~/.claude/settings.json` 中包含 hooks 配置即可，无需为不同工具分别配置。
+
+> **小提示：** 无论使用哪款 IDE，hooks 配置文件路径始终为 `~/.claude/settings.json`。仪表盘启动后，也可点击 ⚙ 按钮查看并一键复制最新配置。
+
+---
+
+### 升级说明
+
+#### 从 v1.0.x 升级到 v1.0.3
+
+**如果使用桌面可执行文件：**
+
+1. 从 [Releases](../../releases) 页面下载新版本对应平台的可执行文件
+2. 停止旧版本（关闭窗口或 `Ctrl+C`）
+3. 用新文件替换旧文件后重新运行，无需其他操作
+
+**如果从源码运行：**
+
+```bash
+# 拉取最新代码
+git pull
+
+# 更新依赖（如 package.json 有变化）
+npm install
+
+# 重启服务
+npm start
+```
+
+**配置文件无需修改**，`~/.claude/settings.json` 中已有的 hooks 配置与新版本完全兼容。
+
+#### 新版本特性（v1.0.3）
+
+- ✅ 打包为 Windows / macOS 可执行文件，双击即可启动，无需安装 Node.js
+- ✅ 可执行文件启动后自动在默认浏览器中打开监控台
+- ✅ 新增 GitHub Actions 自动构建流程，每次发布 tag 自动生成各平台二进制文件
+
+---
 
 ### 界面说明
 

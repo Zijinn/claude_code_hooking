@@ -1,5 +1,15 @@
 # 更新日志
 
+## [1.0.3] - 2026-03-15
+
+### 新增
+- 打包为 Windows / macOS 桌面可执行文件：运行可执行文件后监控台自动在默认浏览器中打开，无需手动输入地址，也无需安装 Node.js
+- GitHub Actions 自动构建流程（`.github/workflows/build-release.yml`）：推送 `v*` 标签后自动编译 Windows（x64）、macOS（x64 + ARM64）可执行文件并发布到 Release 页面
+- README 新增各 IDE 配置指南：Cursor、Windsurf、通义灵码（Lingma）、Qoder、Antigravity 等，以及中文升级说明
+
+### 变更
+- 使用 `--open` 参数或作为打包可执行文件运行时自动打开浏览器（此前仅支持 `--open` 参数）
+
 ## [1.0.2] - 2026-03-15
 
 ### 新增
