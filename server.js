@@ -184,30 +184,36 @@ setInterval(() => {
 // Prune ended sessions older than 1 minute every 30s
 setInterval(() => store.prune(60 * 1000), 30 * 1000);
 
-// Poll VSCode windows every 15s — broadcast which sessions are VSCode-driven
+// Poll IDE windows every 15s — broadcast which sessions are IDE-driven (VSCode, Cursor, Windsurf, etc.)
 setInterval(async () => {
   const sessions = store.getAll();
   if (sessions.length === 0) return;
 
   try {
-    const vscodeWindows = await terminalChecker.getVSCodeWindows();
-    const sessionVSCodeMap = {};
+    const ideWindows = await terminalChecker.getIDEWindows();
+    const sessionIDEMap = {};
     for (const session of sessions) {
       const cwd = session.cwd || '';
       const folderName = cwd.replace(/\\/g, '/').replace(/\/+$/, '').split('/').pop() || '';
-      if (folderName && vscodeWindows.length > 0) {
-        // Match folder name as a word/path segment in the window title (avoids false positives).
-        // VSCode titles typically follow: "filename — folderName" or "folderName — Visual Studio Code"
-        const re = new RegExp(`(^|[\\s\\-\u2014/\\\\])${folderName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([\\s\\-\u2014/\\\\]|$)`, 'i');
-        const matchingWindow = vscodeWindows.find(title => re.test(title));
+      if (!folderName) {
+        // cwd is empty or contains no path segments — IDE detection not possible for this session
+        continue;
+      }
+      // Match folder name as a word/path segment in the window title (avoids false positives).
+      const re = new RegExp(`(^|[\\s\\-\u2014/\\\\])${folderName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([\\s\\-\u2014/\\\\]|$)`, 'i');
+      // Check each IDE in definition order; first match wins
+      for (const [ideKey, titles] of Object.entries(ideWindows)) {
+        if (titles.length === 0) continue;
+        const matchingWindow = titles.find(title => re.test(title));
         if (matchingWindow) {
-          sessionVSCodeMap[session.id] = matchingWindow;
+          sessionIDEMap[session.id] = { ide: ideKey, window: matchingWindow };
+          break;
         }
       }
     }
-    broadcast({ type: 'vscode_status', sessions: sessionVSCodeMap });
+    broadcast({ type: 'ide_status', sessions: sessionIDEMap });
   } catch (err) {
-    console.error('[vscode-check] 检测VSCode窗口失败:', err.message);
+    console.error('[ide-check] 检测IDE窗口失败:', err.message);
   }
 }, 15 * 1000);
 

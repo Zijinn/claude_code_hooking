@@ -422,6 +422,43 @@ body {
   color: #4FC3F7;
 }
 
+/* ── IDE Badges (per-IDE colors) ── */
+
+.ide-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* VSCode – blue */
+.ide-badge-vscode  { background: rgba(0,120,215,0.12); color: #0078D7; }
+[data-theme="dark"] .ide-badge-vscode  { background: rgba(0,120,215,0.22); color: #4FC3F7; }
+
+/* Cursor – violet */
+.ide-badge-cursor  { background: rgba(124,77,255,0.12); color: #7C4DFF; }
+[data-theme="dark"] .ide-badge-cursor  { background: rgba(124,77,255,0.22); color: #B39DDB; }
+
+/* Windsurf – teal (Codeium) */
+.ide-badge-windsurf { background: rgba(0,188,169,0.12); color: #00BCA9; }
+[data-theme="dark"] .ide-badge-windsurf { background: rgba(0,188,169,0.22); color: #4DB6AC; }
+
+/* Antigravity – orange */
+.ide-badge-antigravity { background: rgba(255,107,53,0.12); color: #FF6B35; }
+[data-theme="dark"] .ide-badge-antigravity { background: rgba(255,107,53,0.22); color: #FF8A65; }
+
+/* QCode – green */
+.ide-badge-qcode   { background: rgba(52,168,83,0.12); color: #34A853; }
+[data-theme="dark"] .ide-badge-qcode   { background: rgba(52,168,83,0.22); color: #81C995; }
+
+/* Lingma (通义灵码) – amber/gold */
+.ide-badge-lingma  { background: rgba(255,160,0,0.12); color: #CC8800; }
+[data-theme="dark"] .ide-badge-lingma  { background: rgba(255,160,0,0.22); color: #FFB300; }
+
 /* ── Card Reminder ── */
 .card-reminder {
   display: flex;
@@ -444,6 +481,15 @@ body {
   background: rgba(255,59,48,0.12);
   color: #CC2F26;
   border: 1px solid rgba(255,59,48,0.3);
+}
+
+/* Manual close reminder shown on ended sessions */
+.card-close-reminder {
+  background: rgba(142,142,147,0.1);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+  font-weight: 500;
+  animation: none;
 }
 
 [data-theme="dark"] .card-reminder.waiting_for_input {
@@ -470,6 +516,103 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .card-reminder { animation: none; }
+}
+
+/* ── Agent Team Section ── */
+
+.agent-team-section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--border);
+  font-size: 11px;
+}
+
+.agent-team-header {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+}
+
+.agent-team-main,
+.agent-team-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
+  padding: 1px 0;
+}
+
+.agent-team-children {
+  padding-left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 2px solid var(--border-strong);
+  margin-left: 6px;
+}
+
+.agent-team-icon {
+  font-size: 10px;
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+}
+
+.agent-team-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.agent-team-type {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(0,122,255,0.1);
+  color: var(--color-accent);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.agent-team-duration {
+  color: var(--text-tertiary);
+  font-size: 10px;
+  margin-left: auto;
+}
+
+.agent-team-active .agent-team-label { color: var(--color-active); }
+.agent-team-done   .agent-team-label { color: var(--text-tertiary); }
+.agent-team-done   .agent-team-icon  { opacity: 0.6; }
+
+/* ── Agent communication in event log ── */
+
+.event-item.event-agent-comm {
+  background: rgba(175,82,222,0.04);
+  border-left-color: rgba(175,82,222,0.4);
+}
+
+.event-item.event-agent-comm:hover {
+  border-left-color: #AF52DE;
+}
+
+.agent-comm-arrow {
+  flex-shrink: 0;
+  color: #AF52DE;
+  font-size: 13px;
+}
+
+.agent-comm-tag {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(175,82,222,0.12);
+  color: #AF52DE;
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .card-actions {

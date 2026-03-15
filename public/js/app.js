@@ -29,8 +29,18 @@
     if (data.stats) Dashboard.updateStats(data.stats);
   });
 
+  ws.on('ide_status', (data) => {
+    Dashboard.updateIDEStatus(data.sessions);
+  });
+
+  // Backward compatibility: legacy vscode_status events
   ws.on('vscode_status', (data) => {
-    Dashboard.updateVSCodeStatus(data.sessions);
+    // Convert old string-value map to new { ide, window } format
+    const converted = {};
+    for (const [id, window] of Object.entries(data.sessions || {})) {
+      converted[id] = typeof window === 'string' ? { ide: 'vscode', window } : window;
+    }
+    Dashboard.updateIDEStatus(converted);
   });
 
   ws.connect();

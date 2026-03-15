@@ -1,4 +1,5 @@
-// Event log panel
+// Event types that represent agent-to-agent communication
+const AGENT_COMM_EVENT_TYPES = new Set(['SubagentStart', 'SubagentStop', 'TeammateIdle']);
 const EventLog = {
   maxVisible: 200,
   events: [],
@@ -54,7 +55,13 @@ const EventLog = {
     const el = document.createElement('div');
     const isError = event.type === 'PostToolUseFailure';
     const isHighlight = event.type === 'TaskCompleted' || event.type === 'InstructionsLoaded';
-    el.className = 'event-item' + (isError ? ' event-error' : '') + (isHighlight ? ' event-highlight' : '');
+    // Agent communication: dedicated event types, or TaskCompleted from a named teammate
+    const isAgentComm = AGENT_COMM_EVENT_TYPES.has(event.type) ||
+      (event.type === 'TaskCompleted' && !!event.teammateName);
+    el.className = 'event-item' +
+      (isError ? ' event-error' : '') +
+      (isHighlight ? ' event-highlight' : '') +
+      (isAgentComm ? ' event-agent-comm' : '');
     const time = new Date(event.timestamp).toLocaleTimeString();
     const sessionId = event.sessionId || '';
     const displayName = NameGenerator.getName(sessionId);
@@ -64,9 +71,23 @@ const EventLog = {
     const durationTag = event.toolDuration != null ? ` <span style="color:var(--text-tertiary);font-size:10px">(${event.toolDuration}ms)</span>` : '';
 
     const typeIcon = this._eventTypeIcon(type);
+
+    // Show agent communication metadata inline
+    let commMeta = '';
+    if (event.type === 'SubagentStart') {
+      commMeta = `<span class="agent-comm-arrow">⤷</span>`;
+    } else if (event.type === 'SubagentStop') {
+      commMeta = `<span class="agent-comm-arrow">⤶</span>`;
+    } else if (event.type === 'TaskCompleted' && event.teammateName) {
+      commMeta = `<span class="agent-comm-arrow">↩</span><span class="agent-comm-tag">${event.teammateName}</span>`;
+    } else if (event.type === 'TeammateIdle') {
+      commMeta = `<span class="agent-comm-tag">${event.teammateName || ''}</span>`;
+    }
+
     el.innerHTML = `
       <span class="event-time">${time}</span>
       <span class="event-session-badge" title="${sessionId}" style="background:${nameColor}22;color:${nameColor}">${displayName}</span>
+      ${commMeta}
       <span class="event-type-tag ${type}">${typeIcon}${type}</span>
       <span class="event-detail" title="${detail}">${detail}${durationTag}</span>
     `;
