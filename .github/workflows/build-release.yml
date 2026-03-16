@@ -24,10 +24,12 @@ jobs:
             name: macOS (x64)
             script: build:mac
             artifact: claude-monitor-mac
+            dmg: claude-monitor-mac-x64.dmg
           - os: macos-latest
             name: macOS (ARM64)
             script: build:mac-arm
             artifact: claude-monitor-mac-arm64
+            dmg: claude-monitor-mac-arm64.dmg
 
     steps:
       - name: 检出代码 / Checkout
@@ -36,7 +38,7 @@ jobs:
       - name: 安装 Node.js / Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: 安装依赖 / Install dependencies
@@ -45,11 +47,26 @@ jobs:
       - name: 编译可执行文件 / Build executable
         run: npm run ${{ matrix.script }}
 
+      - name: 创建 DMG / Create DMG
+        if: matrix.dmg != ''
+        run: |
+          mkdir -p dmg_content
+          cp dist/${{ matrix.artifact }} dmg_content/
+          hdiutil create -volname "Claude Monitor ${{ matrix.name }}" -srcfolder dmg_content -ov -format UDZO dist/${{ matrix.dmg }}
+
       - name: 上传构建产物 / Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
           path: dist/${{ matrix.artifact }}
+          if-no-files-found: error
+
+      - name: 上传 DMG 产物 / Upload DMG artifact
+        if: matrix.dmg != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.dmg }}
+          path: dist/${{ matrix.dmg }}
           if-no-files-found: error
 
   release:
@@ -86,6 +103,8 @@ jobs:
             |------|------|------|
             | Windows 64位 | `claude-monitor-win.exe` | 双击直接运行，无需安装 Node.js |
             | macOS Intel | `claude-monitor-mac` | `chmod +x claude-monitor-mac && ./claude-monitor-mac` |
+            | macOS Intel (DMG) | `claude-monitor-mac-x64.dmg` | 双击挂载 DMG，进入磁盘映像后 `chmod +x claude-monitor-mac && ./claude-monitor-mac` |
             | macOS Apple Silicon | `claude-monitor-mac-arm64` | `chmod +x claude-monitor-mac-arm64 && ./claude-monitor-mac-arm64` |
+            | macOS Apple Silicon (DMG) | `claude-monitor-mac-arm64.dmg` | 双击挂载 DMG，进入磁盘映像后 `chmod +x claude-monitor-mac-arm64 && ./claude-monitor-mac-arm64` |
 
             启动后监控台将自动在默认浏览器中打开。
