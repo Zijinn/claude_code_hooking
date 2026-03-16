@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - name: 检出代码 / Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 安装 Node.js / Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: 'npm'
@@ -55,7 +55,7 @@ jobs:
           hdiutil create -volname "Claude Monitor ${{ matrix.name }}" -srcfolder dmg_content -ov -format UDZO dist/${{ matrix.dmg }}
 
       - name: 上传构建产物 / Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact }}
           path: dist/${{ matrix.artifact }}
@@ -63,7 +63,7 @@ jobs:
 
       - name: 上传 DMG 产物 / Upload DMG artifact
         if: matrix.dmg != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.dmg }}
           path: dist/${{ matrix.dmg }}
@@ -77,10 +77,10 @@ jobs:
 
     steps:
       - name: 检出代码 / Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 下载所有构建产物 / Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist/
 
